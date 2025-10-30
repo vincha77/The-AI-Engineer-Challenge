@@ -111,6 +111,19 @@ async def api_root_alt():
     """Alternative API root endpoint"""
     return {"message": "API root endpoint", "status": "ok", "available_endpoints": ["/api/chat", "/api/health"]}
 
+# Diagnostic endpoint to check environment variable configuration
+@app.get("/api/env-check")
+async def env_check():
+    """Diagnostic endpoint to verify environment variable is accessible"""
+    api_key_present = os.getenv("OPENAI_API_KEY") is not None
+    api_key_length = len(os.getenv("OPENAI_API_KEY", ""))
+    return {
+        "OPENAI_API_KEY_present": api_key_present,
+        "OPENAI_API_KEY_length": api_key_length if api_key_present else 0,
+        "status": "configured" if api_key_present else "missing",
+        "note": "If missing, add OPENAI_API_KEY in Vercel project settings -> Environment Variables"
+    }
+
 # Entry point for running the application directly
 if __name__ == "__main__":
     import uvicorn
