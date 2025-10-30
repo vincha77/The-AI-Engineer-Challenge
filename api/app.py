@@ -67,7 +67,8 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Define a health check endpoint to verify API status
-@app.get("/api/health")
+# Note: Vercel routing handles the /api prefix, so we define endpoints without it
+@app.get("/health")
 async def health_check():
     return {"status": "ok"}
 
