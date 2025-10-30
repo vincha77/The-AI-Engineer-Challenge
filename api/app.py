@@ -105,6 +105,12 @@ async def api_root():
     """Debug endpoint to verify /api routing works"""
     return {"message": "API root endpoint", "status": "ok", "available_endpoints": ["/api/chat", "/api/health"]}
 
+# Also add /api/ route without trailing path for Vercel routing
+@app.api_route("/api", methods=["GET"])
+async def api_root_alt():
+    """Alternative API root endpoint"""
+    return {"message": "API root endpoint", "status": "ok", "available_endpoints": ["/api/chat", "/api/health"]}
+
 # Entry point for running the application directly
 if __name__ == "__main__":
     import uvicorn
