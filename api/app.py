@@ -30,47 +30,75 @@ class ChatRequest(BaseModel):
     model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
     # api_key: str          # OpenAI API key for authentication
 
-# Define the main chat endpoint that handles POST requests
-@app.post("/api/chat")
-async def chat(request: ChatRequest):
-    try:
-        # Get the OpenAI API key from the environment variables
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured on server")
+# Helper function for chat logic (to avoid duplication)
+async def _handle_chat(request: ChatRequest):
+    """Internal chat handler logic"""
+    # Get the OpenAI API key from the environment variables
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured on server")
 
-        # Initialize OpenAI client with the provided API key
-        client = OpenAI(api_key=api_key)
-        
-        # Create an async generator function for streaming responses
-        async def generate():
-            # Create a streaming chat completion request
-            stream = client.chat.completions.create(
-                model=request.model,
-                messages=[
-                    {"role": "developer", "content": request.developer_message},
-                    {"role": "user", "content": request.user_message}
-                ],
-                stream=True  # Enable streaming response
-            )
-            
-            # Yield each chunk of the response as it becomes available
-            for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    yield chunk.choices[0].delta.content
-
-        # Return a streaming response to the client
-        return StreamingResponse(generate(), media_type="text/plain")
+    # Initialize OpenAI client with the provided API key
+    client = OpenAI(api_key=api_key)
     
+    # Create an async generator function for streaming responses
+    async def generate():
+        # Create a streaming chat completion request
+        # Note: OpenAI API uses "system" role, not "developer"
+        stream = client.chat.completions.create(
+            model=request.model,
+            messages=[
+                {"role": "system", "content": request.developer_message},
+                {"role": "user", "content": request.user_message}
+            ],
+            stream=True  # Enable streaming response
+        )
+        
+        # Yield each chunk of the response as it becomes available
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
+    # Return a streaming response to the client
+    return StreamingResponse(generate(), media_type="text/plain")
+
+# Define the main chat endpoint that handles POST requests
+# Support both /api/chat and /chat paths for Vercel routing compatibility
+@app.post("/api/chat")
+async def chat_with_prefix(request: ChatRequest):
+    try:
+        return await _handle_chat(request)
+    except HTTPException:
+        raise
     except Exception as e:
         # Handle any errors that occur during processing
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    """Alternative endpoint path if Vercel strips /api prefix"""
+    try:
+        return await _handle_chat(request)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Define a health check endpoint to verify API status
-# Note: Vercel routing handles the /api prefix, so we define endpoints without it
+# Support both /api/health and /health paths for Vercel routing compatibility
+@app.get("/api/health")
+async def health_check_with_prefix():
+    return {"status": "ok", "message": "API is running"}
+
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    """Alternative endpoint path if Vercel strips /api prefix"""
+    return {"status": "ok", "message": "API is running"}
+
+# Debug endpoint to check routing
+@app.get("/")
+async def root():
+    return {"message": "FastAPI is running", "endpoints": ["/api/chat", "/chat", "/api/health", "/health"]}
 
 # Entry point for running the application directly
 if __name__ == "__main__":
