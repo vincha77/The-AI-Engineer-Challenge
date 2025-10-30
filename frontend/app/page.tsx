@@ -19,8 +19,13 @@ async function streamChat(
     body: JSON.stringify({ developer_message: developerMessage, user_message: userMessage, model })
   });
 
-  if (!res.ok || !res.body) {
-    throw new Error("Failed to connect to chat endpoint");
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => res.statusText);
+    throw new Error(`Failed to connect to chat endpoint: ${res.status} ${res.statusText} - ${errorText}`);
+  }
+
+  if (!res.body) {
+    throw new Error("No response body received from chat endpoint");
   }
 
   const reader = res.body.getReader();

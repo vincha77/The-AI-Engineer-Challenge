@@ -95,10 +95,15 @@ async def health_check():
     """Alternative endpoint path if Vercel strips /api prefix"""
     return {"status": "ok", "message": "API is running"}
 
-# Debug endpoint to check routing
+# Debug endpoints to check routing and test connectivity
 @app.get("/")
 async def root():
     return {"message": "FastAPI is running", "endpoints": ["/api/chat", "/chat", "/api/health", "/health"]}
+
+@app.get("/api")
+async def api_root():
+    """Debug endpoint to verify /api routing works"""
+    return {"message": "API root endpoint", "status": "ok", "available_endpoints": ["/api/chat", "/api/health"]}
 
 # Entry point for running the application directly
 if __name__ == "__main__":
