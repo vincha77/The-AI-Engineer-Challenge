@@ -19,7 +19,7 @@ Are you ready? Let's get started!
 <details>
   <summary>🖥️ Accessing "gpt-4.1-mini" (ChatGPT) like a developer</summary>
 
-1. Head to [this notebook](https://colab.research.google.com/drive/1sT7rzY_Lb1_wS0ELI1JJfff0NUEcSD72?usp=sharing) and follow along with the instructions!
+1. Head to [this notebook](https://colab.research.google.com/drive/1sT7rzY_Lb1_wS0ELI1JJfff0NUEcSD72?usp=sharing) and follow along with the instructions! (NOTE: the notebook is also in this repo under the `jupyter_notebooks` folder...)
 
 2. Complete the notebook and try out your own system/assistant messages!
 
